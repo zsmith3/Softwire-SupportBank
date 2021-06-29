@@ -1,16 +1,24 @@
-import {Transaction} from "./Transaction";
+import { getLogger } from "log4js";
+
+import { Transaction } from "./Transaction";
+
+const logger = getLogger("logs/debug.log");
+
 
 export default class Account {
     static accounts: Account[] = [];
 
-    static getByName(name: string, create: boolean): Account {
+    static getByName(name: string, createIfNotFound: boolean): Account {
         const result = Account.accounts.find(account => account.name === name);
         if (result) return result;
-        else if (create) {
+        else if (createIfNotFound) {
             const newAccount = new Account(name);
             Account.accounts.push(newAccount);
             return newAccount;
-        } else throw("Account not found");
+        } else {
+            logger.error("Account not found: " + name);
+            throw("Account not found: " + name);
+        }
     }
 
     name: string;
@@ -18,13 +26,18 @@ export default class Account {
     balance: number = 0;
 
     constructor(name: string) {
+        logger.info("Create account: " + name);
+
         this.name = name;
     }
 
     addTransaction(transaction: Transaction) {
         if (transaction.from.name === this.name) this.balance -= transaction.amount;
         else if (transaction.to.name === this.name) this.balance += transaction.amount;
-        else throw("Cannot add a transaction to account not involved in the transaction");
+        else {
+            logger.error(`Tried to add transaction between ${transaction.from} and ${transaction.to} to account: ${this.name}`);
+            throw("Cannot add a transaction to account not involved in the transaction");
+        }
         this.transactions.push(transaction);
     }
 
