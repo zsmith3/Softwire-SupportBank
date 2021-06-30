@@ -3,6 +3,7 @@ import { configure, getLogger } from "log4js";
 
 import { loadTransactions, writeTransactions } from "./io";
 import Account from "./Account";
+import {Transaction} from "./Transaction";
 
 
 configure({
@@ -17,6 +18,23 @@ const logger = getLogger("logs/debug.log");
 logger.info("Program started");
 
 
+function listForAccounts(command: string) {
+    const accountNames = command.slice(5).split(", ");
+    const accounts = accountNames.map(accountName => Account.getByName(accountName, false));
+    logger.info("Listing for accounts: " + accountNames);
+    if (accounts.length === 1) {
+        accounts[0].transactions.forEach(transaction => {
+            console.log(transaction.display())
+        });
+    } else {
+        Transaction.transactions
+            .filter(transaction => accounts.includes(transaction.from) && accounts.includes(transaction.to))
+            .forEach(transaction => {
+                console.log(transaction.display());
+            });
+    }
+}
+
 while (true) {
     logger.info("Reading command from CLI");
     const command = readlineSync.question("Enter Command: ");
@@ -26,16 +44,11 @@ while (true) {
         loadTransactions("data/" + filename);
     } else if (command === "List All") {
         logger.info("Listing accounts");
-        for (const account of Account.accounts) {
+        Account.accounts.forEach(account => {
             console.log(account.display());
-        }
+        });
     } else if (command.startsWith("List ")) {
-        const accountName = command.slice(5);
-        const account = Account.getByName(accountName, false);
-        logger.info("Listing for account: " + account.name);
-        for (const transaction of account.transactions) {
-            console.log(transaction.display())
-        }
+        listForAccounts(command);
     } else if (command.startsWith("Export File ")) {
         const filename = command.slice(12);
         writeTransactions("data/" + filename);

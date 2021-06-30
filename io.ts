@@ -8,7 +8,7 @@ import "ts-replace-all";
 import { getLogger } from "log4js";
 import { DateTime, Duration } from "luxon";
 
-import {recordType, Transaction, xmlRecordType} from "./Transaction";
+import {Record, Transaction, XmlRecord} from "./Transaction";
 
 const logger = getLogger("logs/debug.log");
 
@@ -31,7 +31,7 @@ function readFile(filename: string) {
     }
 }
 
-function loadFromJson(fileData: string, filename: string): recordType[] {
+function loadFromJson(fileData: string, filename: string): Record[] {
     const fileDataReformatted = fileData
         .replaceAll("FromAccount", "From")
         .replaceAll("ToAccount", "To");
@@ -46,7 +46,7 @@ function loadFromJson(fileData: string, filename: string): recordType[] {
 function loadFromXml(fileData: string, filename: string) {
     try {
         const xmlParseResult = fastxml.parse(fileData, {ignoreAttributes: false});
-        const recordsRaw: xmlRecordType[] = xmlParseResult.TransactionList.SupportTransaction;
+        const recordsRaw: XmlRecord[] = xmlParseResult.TransactionList.SupportTransaction;
         return recordsRaw.map(record => ({
             From: record.Parties.From,
             To: record.Parties.To,
@@ -60,7 +60,7 @@ function loadFromXml(fileData: string, filename: string) {
     }
 }
 
-function addTransactions(records: recordType[], dateFormat: string, filename: string) {
+function addTransactions(records: Record[], dateFormat: string, filename: string) {
     let errorCount = 0;
     records.forEach(record => {
         try {
@@ -78,7 +78,7 @@ export function loadTransactions(filename: string) {
     logger.info("Loading file: " + filename);
 
     const fileData = readFile(filename);
-    let records: recordType[];
+    let records: Record[];
     let dateFormat: string;
     const ext = getFilenameExtension(filename);
 
