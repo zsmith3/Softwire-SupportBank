@@ -26,8 +26,10 @@
   },
   "dependencies": {
     "csv-parse": "^4.16.0",
+    "fast-xml-parser": "^3.19.0",
     "log4js": "^6.3.0",
     "luxon": "^1.27.0",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+    "ts-replace-all": "^1.0.0"
   }
 }

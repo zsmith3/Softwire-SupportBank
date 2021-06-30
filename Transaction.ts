@@ -11,8 +11,8 @@ export type recordType = { Date: string; From: string; To: string; Narrative: st
 export class Transaction {
     static transactions: Transaction[] = [];
 
-    static addTransaction(record: recordType): Transaction {
-        const transaction = new Transaction(record);
+    static addTransaction(record: recordType, dateFormat: string): Transaction {
+        const transaction = new Transaction(record, dateFormat);
         Transaction.transactions.push(transaction);
         return transaction;
     }
@@ -23,21 +23,22 @@ export class Transaction {
     narrative: string;
     date: DateTime;
 
-    constructor(record: recordType) {
+    constructor(record: recordType, dateFormat: string) {
+        logger.debug("Create transaction: " + JSON.stringify(record));
         this.from = Account.getByName(record.From, true);
         this.to = Account.getByName(record.To, true);
 
         this.amount = parseFloat(record.Amount);
         if (isNaN(this.amount)) {
-            logger.error("Invalid amount on record: " + JSON.stringify(record));
+            logger.error("Invalid amount: " + record.Amount);
             throw("Invalid amount: " + record.Amount);
         }
 
         this.narrative = record.Narrative;
 
-        this.date = DateTime.fromFormat(record.Date, "dd/mm/yyyy");
+        this.date = DateTime.fromFormat(record.Date, dateFormat);
         if (!this.date.isValid) {
-            logger.error("Invalid date on record: " + JSON.stringify(record));
+            logger.error("Invalid date: " + record.Date);
             throw("Invalid date: " + record.Date);
         }
 
@@ -46,6 +47,6 @@ export class Transaction {
     }
 
     display (): string {
-        return `From: ${this.from.name}, To: ${this.to.name}, Amount: ${this.amount}, Narrative: ${this.narrative}, Date: ${this.date.toFormat("dd/mm/yyyy")}`;
+        return `From: ${this.from.name}, To: ${this.to.name}, Amount: ${this.amount}, Narrative: ${this.narrative}, Date: ${this.date.toFormat("dd/MM/yyyy")}`;
     }
 }
