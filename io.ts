@@ -1,17 +1,17 @@
 // @ts-ignore
-import csv from "csv-parse/lib/sync";
+import csvParse from "csv-parse/lib/sync";
+// @ts-ignore
+import csvStringify from "csv-stringify/lib/sync";
 import * as fastxml from "fast-xml-parser";
 import * as fs from "fs";
 import "ts-replace-all";
 import { getLogger } from "log4js";
 import { DateTime, Duration } from "luxon";
 
-import {recordType, Transaction} from "./Transaction";
+import {recordType, Transaction, xmlRecordType} from "./Transaction";
 
 const logger = getLogger("logs/debug.log");
 
-
-type xmlRecordType = {Description: string; Date: string; Value: string; Parties: { From: any; To: any; }};
 
 function getFilenameExtension(filename: string) {
     const filenameArray = filename.split(".");
@@ -48,16 +48,16 @@ export function loadTransactions(filename: string) {
         }
         dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
     } else if (ext === "csv") {
-        records = csv(fileData, {columns: true, skip_empty_lines: true});
+        records = csvParse(fileData, {columns: true, skip_empty_lines: true});
         dateFormat = "dd/MM/yyyy";
     } else if (ext === "xml") {
         try {
-            const xmlParseResult = fastxml.parse(fileData, {ignoreAttributes: false, attributeNamePrefix: ""});
+            const xmlParseResult = fastxml.parse(fileData, {ignoreAttributes: false});
             const recordsRaw: xmlRecordType[] = xmlParseResult.TransactionList.SupportTransaction;
             records = recordsRaw.map(record => ({
                 From: record.Parties.From,
                 To: record.Parties.To,
-                Date: getDateFromSerialFormat(record.Date),
+                Date: getDateFromSerialFormat(record["@_Date"]),
                 Narrative: record.Description,
                 Amount: record.Value
             }));
@@ -82,4 +82,33 @@ export function loadTransactions(filename: string) {
     }
 
     if (errorCount) throw(`Found ${errorCount} invalid records in ${filename}. See log for more details.`);
+}
+
+export function writeTransactions(filename: string) {
+    const ext = getFilenameExtension(filename);
+    let data: string;
+
+    if (ext === "json") {
+        data = JSON.stringify(Transaction.transactions, null, "  ");
+    } else if (ext === "csv") {
+        data = csvStringify(Transaction.transactions.map(transaction => transaction.toCSVFormat()), {
+            header: true,
+            columns: [ { key: "Date" }, { key: "From" }, { key: "To" }, { key: "Narrative" }, { key: "Amount" } ]
+        });
+    } else if (ext === "xml") {
+        const parser = new fastxml.j2xParser({ignoreAttributes: false, format: true});
+        const xmlData = parser.parse({ TransactionList: { SupportTransaction: Transaction.transactions.map(transaction => transaction.toXMLFormat()) } });
+        const prefix = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+        data = prefix + xmlData;
+    } else {
+        logger.error("Invalid format on file: " + filename);
+        throw("Invalid file format: " + ext);
+    }
+
+    try {
+        fs.writeFileSync(filename, data);
+    } catch (error) {
+        logger.error(`Error when writing to file ${filename}: ${error}`);
+        throw("Error writing file: " + filename);
+    }
 }

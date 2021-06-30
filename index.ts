@@ -2,7 +2,7 @@
 import * as readlineSync from "readline-sync";
 import { configure, getLogger } from "log4js";
 
-import { loadTransactions } from "./io";
+import { loadTransactions, writeTransactions } from "./io";
 import Account from "./Account";
 
 
@@ -37,6 +37,9 @@ while (true) {
         for (const transaction of account.transactions) {
             console.log(transaction.display())
         }
+    } else if (command.startsWith("Export File ")) {
+        const filename = command.slice(12);
+        writeTransactions("data/" + filename);
     } else if (command === "End") break;
     else {
         logger.error("Invalid command: " + command);

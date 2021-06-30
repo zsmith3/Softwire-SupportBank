@@ -7,6 +7,8 @@ const logger = getLogger("logs/debug.log");
 
 
 export type recordType = { Date: string; From: string; To: string; Narrative: string; Amount: string };
+export type xmlRecordType = {Description: string; ["@_Date"]: string; Value: string; Parties: { From: any; To: any; }};
+export type jsonRecordType = {Date: string; FromAccount: string, ToAccount: string; Narrative: string; Amount: number};
 
 export class Transaction {
     static transactions: Transaction[] = [];
@@ -44,6 +46,18 @@ export class Transaction {
 
         this.from.addTransaction(this);
         this.to.addTransaction(this);
+    }
+
+    toJSON(): jsonRecordType {
+        return {Date: this.date.toFormat("yyyy-MM-dd'T'HH:mm:ss"), FromAccount: this.from.name, ToAccount: this.to.name, Narrative: this.narrative, Amount: this.amount};
+    }
+
+    toCSVFormat(): recordType {
+        return {Date: this.date.toFormat("dd/MM/yyyy"), From: this.from.name, To: this.to.name, Narrative: this.narrative, Amount: this.amount.toString()};
+    }
+
+    toXMLFormat(): xmlRecordType {
+        return {["@_Date"]: this.date.diff(DateTime.fromObject({year: 1900}), "days").days.toString(), Description: this.narrative, Value: this.amount.toString(), Parties: { From: this.from.name, To: this.to.name } };
     }
 
     display (): string {
