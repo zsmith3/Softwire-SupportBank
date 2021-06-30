@@ -5,7 +5,8 @@ import Account from "./Account";
 
 const logger = getLogger("logs/debug.log");
 
-
+// TODO - Change these to interfaces
+// TODO - Typically RecordType
 export type recordType = { Date: string; From: string; To: string; Narrative: string; Amount: string };
 export type xmlRecordType = {Description: string; ["@_Date"]: string; Value: string; Parties: { From: any; To: any; }};
 export type jsonRecordType = {Date: string; FromAccount: string, ToAccount: string; Narrative: string; Amount: number};
