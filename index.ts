@@ -1,4 +1,3 @@
-// @ts-ignore
 import * as readlineSync from "readline-sync";
 import { configure, getLogger } from "log4js";
 
