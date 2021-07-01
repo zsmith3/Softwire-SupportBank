@@ -1,20 +1,20 @@
 import * as readlineSync from "readline-sync";
-import { configure, getLogger } from "log4js";
+import {configure, getLogger} from "log4js";
 
-import { loadTransactions, writeTransactions } from "./io";
+import {loadTransactions, writeTransactions} from "./io";
 import Account from "./Account";
 import {Transaction} from "./Transaction";
 
 
 configure({
     appenders: {
-        file: { type: 'fileSync', filename: 'logs/debug.log' }
+        file: {type: 'fileSync', filename: 'logs/debug.log'}
     },
     categories: {
-        default: { appenders: ['file'], level: 'debug'}
+        default: {appenders: ['file'], level: 'debug'}
     }
 });
-const logger = getLogger("logs/debug.log");
+const logger = getLogger("index");
 logger.info("Program started");
 
 
@@ -55,7 +55,7 @@ while (true) {
     } else if (command === "End") break;
     else {
         logger.error("Invalid command: " + command);
-        throw("Invalid command");
+        console.log("Invalid command.");
     }
 }
 

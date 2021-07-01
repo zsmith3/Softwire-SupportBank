@@ -5,12 +5,12 @@ import csvStringify from "csv-stringify/lib/sync";
 import * as fastxml from "fast-xml-parser";
 import * as fs from "fs";
 import "ts-replace-all";
-import { getLogger } from "log4js";
-import { DateTime, Duration } from "luxon";
+import {getLogger} from "log4js";
+import {DateTime, Duration} from "luxon";
 
 import {Record, Transaction, XmlRecord} from "./Transaction";
 
-const logger = getLogger("logs/debug.log");
+const logger = getLogger("io");
 
 
 function getFilenameExtension(filename: string) {
@@ -82,18 +82,23 @@ export function loadTransactions(filename: string) {
     let dateFormat: string;
     const ext = getFilenameExtension(filename);
 
-    if (ext === "json") {
-        records = loadFromJson(fileData, filename);
-        dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
-    } else if (ext === "csv") {
-        records = csvParse(fileData, {columns: true, skip_empty_lines: true});
-        dateFormat = "dd/MM/yyyy";
-    } else if (ext === "xml") {
-        records = loadFromXml(fileData, filename);
-        dateFormat = "dd/MM/yyyy";
-    } else {
-        logger.error("Invalid format on file: " + filename);
-        throw("Invalid file format: " + ext);
+    switch (ext) {
+        case "json":
+            records = loadFromJson(fileData, filename);
+            dateFormat = "yyyy-MM-dd'T'HH:mm:ss";
+            break;
+        case "csv":
+            records = csvParse(fileData, {columns: true, skip_empty_lines: true});
+            dateFormat = "dd/MM/yyyy";
+            break;
+        case "xml":
+            records = loadFromXml(fileData, filename);
+            dateFormat = "dd/MM/yyyy";
+            break;
+        default:
+            logger.error("Invalid format on file: " + filename);
+            throw("Invalid file format: " + ext);
+            break;
     }
 
     addTransactions(records, dateFormat, filename);
@@ -116,23 +121,31 @@ function writeToFile(filename: string, data: string) {
     }
 }
 
+function encodeTransactions(ext: string, filename: string): string {
+    switch (ext) {
+        case "json":
+            return JSON.stringify(Transaction.transactions, null, "  ");
+            break;
+        case "csv":
+            return csvStringify(Transaction.transactions.map(transaction => transaction.toCSVFormat()), {
+                header: true,
+                columns: [{key: "Date"}, {key: "From"}, {key: "To"}, {key: "Narrative"}, {key: "Amount"}]
+            });
+            break;
+        case "xml":
+            return transactionsToXml();
+            break;
+        default:
+            logger.error("Invalid format on file: " + filename);
+            throw("Invalid file format: " + ext);
+            break;
+    }
+}
+
 export function writeTransactions(filename: string) {
     const ext = getFilenameExtension(filename);
-    let data: string;
 
-    if (ext === "json") {
-        data = JSON.stringify(Transaction.transactions, null, "  ");
-    } else if (ext === "csv") {
-        data = csvStringify(Transaction.transactions.map(transaction => transaction.toCSVFormat()), {
-            header: true,
-            columns: [ { key: "Date" }, { key: "From" }, { key: "To" }, { key: "Narrative" }, { key: "Amount" } ]
-        });
-    } else if (ext === "xml") {
-        data = transactionsToXml();
-    } else {
-        logger.error("Invalid format on file: " + filename);
-        throw("Invalid file format: " + ext);
-    }
+    const data = encodeTransactions(ext, filename);
 
     writeToFile(filename, data);
 }

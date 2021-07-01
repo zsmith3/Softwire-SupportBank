@@ -1,8 +1,8 @@
-import { getLogger } from "log4js";
+import {getLogger} from "log4js";
 
-import { Transaction } from "./Transaction";
+import {Transaction} from "./Transaction";
 
-const logger = getLogger("logs/debug.log");
+const logger = getLogger("Account");
 
 
 export default class Account {
@@ -21,14 +21,11 @@ export default class Account {
         }
     }
 
-    name: string;
     transactions: Transaction[] = [];
     balance: number = 0;
 
-    constructor(name: string) {
+    constructor(public name: string) {
         logger.info("Create account: " + name);
-
-        this.name = name;
     }
 
     addTransaction(transaction: Transaction) {
@@ -41,11 +38,11 @@ export default class Account {
         this.transactions.push(transaction);
     }
 
-    displayBalance (): string {
+    displayBalance(): string {
         return (Math.round(this.balance * 100) / 100).toString();
     }
 
-    display (): string {
+    display(): string {
         return `Name: ${this.name}, Balance: ${this.displayBalance()}`;
     }
 }
